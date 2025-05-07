@@ -7,8 +7,17 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type DBConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
+}
+
 type Config struct {
 	Port string
+	DB   DBConfig
 }
 
 var AppConfig *Config
@@ -22,6 +31,13 @@ func Load() *Config {
 
 	AppConfig = &Config{
 		Port: getEnv("PORT", "8080"),
+		DB: DBConfig{
+			Host:     getEnv("DB_HOST", "127.0.0.1"),
+			Port:     getEnv("DB_PORT", "3306"),
+			User:     getEnv("DB_USER", "root"),
+			Password: getEnv("DB_PASSWORD", ""),
+			Name:     getEnv("DB_NAME", "shortlink"),
+		},
 	}
 
 	return AppConfig
