@@ -3,17 +3,28 @@ package route
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/supanut9/shortlink-service/internal/handler"
+	"github.com/supanut9/shortlink-service/internal/repository"
+	"github.com/supanut9/shortlink-service/internal/service"
 )
 
 func Setup(app *fiber.App) {
-	api := app.Group("/api")
+	// Repository
+	linkRepo := repository.NewLinkRepository()
+	clickEventRepo := repository.NewClickEventRepository()
 
-	v1 := api.Group("/v1")
+	// Service
+	linkService := service.NewLinkService(linkRepo)
+	clickEventService := service.NewClickEventService(clickEventRepo)
 
-	// Link management routes
-	linkGroup := v1.Group("/links")
-	handler.RegisterLinkRoutes(linkGroup)
+	// Handler
+	linkHandler := handler.NewLinkHandler(linkService)
+	redirectHandler := handler.NewRedirectHandler(linkService, clickEventService)
 
-	// Public redirect
-	handler.RegisterRedirectRoutes(app)
+	// Public Controller
+	redirectHandler.RegisterRedirectRoutes(app)
+
+	// Private Controller
+	api := app.Group("/api/v1")
+	linkHandler.RegisterLinkRoutes(api.Group("/links"))
+
 }

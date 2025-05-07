@@ -2,14 +2,33 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/supanut9/shortlink-service/internal/service"
 )
 
-func RegisterLinkRoutes(router fiber.Router) {
-	router.Get("/", getAllLinks)
-	router.Get("/:id", getLinkByID)
-	router.Post("/", createLink)
-	router.Put("/:id", updateLink)
-	router.Delete("/:id", deleteLink)
+type LinkHandler struct {
+	service service.LinkService
+}
+
+func NewLinkHandler(s service.LinkService) *LinkHandler {
+	return &LinkHandler{service: s}
+}
+
+func (h *LinkHandler) RegisterLinkRoutes(router fiber.Router) {
+	// router.Get("/", h.GetLinkByHash)
+	router.Get(":slug", h.GetLinkBySlug)
+	// router.Post("/", h.CreateLink)
+	// router.Put("/:id", h.UpdateLink)
+	// router.Delete("/:id", h.DeleteLink)
+}
+
+func (h *LinkHandler) GetLinkBySlug(c *fiber.Ctx) error {
+	slug := c.Params("slug")
+
+	links, err := h.service.GetLinkBySlug(slug)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch links"})
+	}
+	return c.JSON(links)
 }
 
 func getAllLinks(c *fiber.Ctx) error {
