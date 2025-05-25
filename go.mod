@@ -20,6 +20,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mssola/user_agent v0.6.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.62.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
