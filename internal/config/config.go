@@ -18,6 +18,12 @@ type DBConfig struct {
 type Config struct {
 	Port string
 	DB   DBConfig
+	URL  Url
+}
+
+type Url struct {
+	BaseUrl            string
+	FileServiceBaseUrl string
 }
 
 var AppConfig *Config
@@ -37,6 +43,10 @@ func Load() *Config {
 			User:     getEnv("DB_USER", "root"),
 			Password: getEnv("DB_PASSWORD", ""),
 			Name:     getEnv("DB_NAME", "shortlink"),
+		},
+		URL: Url{
+			BaseUrl:            getEnv("BASE_URL", "127.0.0.1"),
+			FileServiceBaseUrl: getEnv("FILE_SERVICE_BASE_URL", "127.0.0.1"),
 		},
 	}
 
