@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/supanut9/shortlink-service/db"
 	"github.com/supanut9/shortlink-service/internal/config"
 	"github.com/supanut9/shortlink-service/internal/handler"
 	httpService "github.com/supanut9/shortlink-service/internal/http-service"
@@ -12,9 +13,12 @@ import (
 func Setup(app *fiber.App) {
 	cfg := config.Load()
 
+	// Database
+	dbConnection := db.DB
+
 	// Repository
-	linkRepo := repository.NewLinkRepository()
-	clickEventRepo := repository.NewClickEventRepository()
+	linkRepo := repository.NewLinkRepository(dbConnection)
+	clickEventRepo := repository.NewClickEventRepository(dbConnection)
 
 	// Service
 	linkService := service.NewLinkService(linkRepo)
