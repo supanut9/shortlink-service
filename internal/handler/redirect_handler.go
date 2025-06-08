@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/mssola/user_agent"
 	"github.com/supanut9/shortlink-service/internal/service"
@@ -38,27 +36,24 @@ func (h *RedirectHandler) redirectLink(c *fiber.Ctx) error {
 		})
 	}
 
-	// Optional: increment click count
-	_ = h.linkService.AddClick(link)
+	ipAddress := c.IP()
+	userAgent := c.Get("User-Agent")
+	referrer := c.Get("Referer")
 
-	req := c.Request()
-	fmt.Println(string(c.Request().Header.RawHeaders()))
-	fmt.Printf("Raw: %s %s\n", req.Header.Method(), req.URI().FullURI())
+	go func() {
+		_ = h.linkService.AddClick(link)
+		meta := service.ClickMeta{
+			LinkID:    link.ID,
+			IPAddress: ipAddress,
+			UserAgent: userAgent,
+			Referrer:  referrer,
+			Platform:  parsePlatform(userAgent),
+			Browser:   parseBrowser(userAgent),
+		}
+		_ = h.clickEventService.Record(meta)
+	}()
 
-	meta := service.ClickMeta{
-		LinkID:    link.ID,
-		IPAddress: c.IP(),
-		UserAgent: c.Get("User-Agent"),
-		Referrer:  c.Get("Referer"),
-		Platform:  parsePlatform(c.Get("User-Agent")),
-		Browser:   parseBrowser(c.Get("User-Agent")),
-		// Country: use GeoIP if available
-	}
-
-	_ = h.clickEventService.Record(meta)
-
-	// Redirect to original long URL
-	return c.Redirect(link.URL, fiber.StatusTemporaryRedirect) // 307
+	return c.Redirect(link.URL, fiber.StatusTemporaryRedirect)
 }
 
 func parsePlatform(uaString string) string {
