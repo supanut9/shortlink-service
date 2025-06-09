@@ -10,8 +10,7 @@ import (
 	"github.com/supanut9/shortlink-service/internal/service"
 )
 
-func Setup(app *fiber.App) {
-	cfg := config.Load()
+func Setup(app *fiber.App, cfg *config.Config) {
 
 	// Database
 	dbConnection := db.DB
@@ -26,7 +25,7 @@ func Setup(app *fiber.App) {
 	fileService := httpService.NewFileService(cfg.URL.FileServiceBaseUrl)
 
 	// Handler
-	linkHandler := handler.NewLinkHandler(linkService, fileService)
+	linkHandler := handler.NewLinkHandler(linkService, fileService, cfg)
 	redirectHandler := handler.NewRedirectHandler(linkService, clickEventService)
 
 	// Public Controller

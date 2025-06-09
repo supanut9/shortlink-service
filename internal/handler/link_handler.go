@@ -14,12 +14,14 @@ import (
 type LinkHandler struct {
 	service     service.LinkService
 	fileService httpService.FileService
+	cfg         *config.Config
 }
 
-func NewLinkHandler(linkSvc service.LinkService, fileSvc httpService.FileService) *LinkHandler {
+func NewLinkHandler(linkSvc service.LinkService, fileSvc httpService.FileService, cfg *config.Config) *LinkHandler {
 	return &LinkHandler{
 		service:     linkSvc,
 		fileService: fileSvc,
+		cfg:         cfg,
 	}
 }
 
@@ -57,16 +59,14 @@ func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch links"})
 	}
 
-	cfg := config.Load()
-
-	shortLink := fmt.Sprintf("%s/%s", cfg.URL.BaseUrl, slug)
+	shortLink := fmt.Sprintf("%s/%s", h.cfg.URL.BaseUrl, slug)
 
 	if req.QRCode {
 		data, err := GenerateQRCodeBuffer(shortLink)
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to generate QRCode"})
 		}
-		qrcodeUrl, err := h.fileService.UploadFile(cfg.QRCode.Bucket, "", shortLink, data)
+		qrcodeUrl, err := h.fileService.UploadFile(h.cfg.QRCode.Bucket, "", shortLink, data)
 
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to upload QRCode"})

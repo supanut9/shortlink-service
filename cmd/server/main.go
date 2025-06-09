@@ -15,7 +15,7 @@ func main() {
 
 	db.InitDB(&cfg.DB)
 
-	route.Setup(app)
+	route.Setup(app, cfg)
 
 	fmt.Println("App running on port:", cfg.Port)
 	app.Listen(":" + cfg.Port)
