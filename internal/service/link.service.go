@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/supanut9/shortlink-service/internal/entity"
 	"github.com/supanut9/shortlink-service/internal/repository"
 	"github.com/supanut9/shortlink-service/internal/utils"
@@ -26,27 +27,25 @@ func (s *linkService) CreateLink(url string) (string, error) {
 	const maxAttempts = 5
 
 	for i := 0; i < maxAttempts; i++ {
+
 		slug := utils.GenerateSlug(8)
 
-		// Check if the slug already exists
-		existingLink, err := s.repo.FindBySlug(slug)
-		if err != nil {
-			return "", err
-		}
-		if existingLink != nil {
-			// Slug exists → retry
-			continue
-		}
-
-		// Slug is unique → create new link
 		link := &entity.Link{
 			Slug: slug,
 			URL:  url,
 		}
-		if err := s.repo.Create(link); err != nil {
-			return "", err
+
+		err := s.repo.Create(link)
+		if err == nil {
+			return slug, nil
 		}
-		return slug, nil
+
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+			continue
+		}
+
+		return "", err
 	}
 
 	return "", errors.New("failed to generate unique slug after multiple attempts")
