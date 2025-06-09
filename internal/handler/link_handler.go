@@ -2,12 +2,15 @@ package handler
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/skip2/go-qrcode"
 	"github.com/supanut9/shortlink-service/internal/config"
 	httpService "github.com/supanut9/shortlink-service/internal/http-service"
+	"github.com/supanut9/shortlink-service/internal/repository"
 	"github.com/supanut9/shortlink-service/internal/service"
 )
 
@@ -56,7 +59,15 @@ func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 
 	slug, err := h.service.CreateLink(req.URL)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch links"})
+		if errors.Is(err, repository.ErrUniqueSlugGenerationFailed) {
+			// Return a 503 Service Unavailable status
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"error": "Cannot process request at this time, please try again later.",
+			})
+		}
+
+		log.Printf("unhandled database error in CreateLink: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "A database error occurred."})
 	}
 
 	shortLink := fmt.Sprintf("%s/%s", h.cfg.URL.BaseUrl, slug)
@@ -69,7 +80,17 @@ func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 		qrcodeUrl, err := h.fileService.UploadFile(h.cfg.QRCode.Bucket, "", shortLink, data)
 
 		if err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": "Failed to upload QRCode"})
+			log.Printf("file service error: %v", err)
+
+			if errors.Is(err, repository.ErrInsufficientStorage) {
+				return c.Status(fiber.StatusInsufficientStorage).JSON(fiber.Map{
+					"error": "Cannot save QR code, insufficient storage on file server.",
+				})
+			}
+
+			return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+				"error": "The QR code could not be saved due to an issue with an upstream service.",
+			})
 		}
 
 		return c.JSON(fiber.Map{

@@ -48,7 +48,7 @@ func (s *linkService) CreateLink(url string) (string, error) {
 		return "", err
 	}
 
-	return "", errors.New("failed to generate unique slug after multiple attempts")
+	return "", repository.ErrUniqueSlugGenerationFailed
 }
 
 func (s *linkService) GetLinkBySlug(slug string) (*entity.Link, error) {

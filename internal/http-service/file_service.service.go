@@ -8,6 +8,8 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+
+	"github.com/supanut9/shortlink-service/internal/repository"
 )
 
 type FileService interface {
@@ -72,7 +74,14 @@ func (f *fileService) UploadFile(bucketName, folderPath, filename string, file *
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("❌ Upload failed. Status: %d Body: %s", resp.StatusCode, string(body))
-		return "", fmt.Errorf("upload failed: %s", string(body))
+
+		// If the upstream service returns 507, return our specific error
+		if resp.StatusCode == http.StatusInsufficientStorage {
+			return "", repository.ErrInsufficientStorage
+		}
+
+		// For all other errors, wrap the general file upload error
+		return "", fmt.Errorf("%w: %s", repository.ErrFileUploadFailed, string(body))
 	}
 
 	log.Printf("✅ Upload successful. Parsing response...")
