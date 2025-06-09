@@ -24,11 +24,8 @@ func NewLinkHandler(linkSvc service.LinkService, fileSvc httpService.FileService
 }
 
 func (h *LinkHandler) RegisterLinkRoutes(router fiber.Router) {
-	// router.Get("/", h.GetLinkByHash)
 	router.Get(":slug", h.GetLinkBySlug)
 	router.Post("/", h.CreateLink)
-	// router.Put("/:id", h.UpdateLink)
-	// router.Delete("/:id", h.DeleteLink)
 }
 
 func (h *LinkHandler) GetLinkBySlug(c *fiber.Ctx) error {
@@ -39,16 +36,6 @@ func (h *LinkHandler) GetLinkBySlug(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch links"})
 	}
 	return c.JSON(links)
-}
-
-func getAllLinks(c *fiber.Ctx) error {
-	// Sample logic
-	return c.JSON(fiber.Map{"message": "List of links"})
-}
-
-func getLinkByID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	return c.JSON(fiber.Map{"message": "Get link by ID", "id": id})
 }
 
 type CreateLinkRequest struct {
@@ -79,13 +66,12 @@ func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to generate QRCode"})
 		}
-		qrcodeUrl, err := h.fileService.UploadFile("shortlink-qrcodes", "", shortLink, data)
+		qrcodeUrl, err := h.fileService.UploadFile(cfg.QRCode.Bucket, "", shortLink, data)
 
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to upload QRCode"})
 		}
 
-		// Example response
 		return c.JSON(fiber.Map{
 			"message":    "Link created",
 			"url":        req.URL,
@@ -94,9 +80,6 @@ func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 		})
 	}
 
-	// Debug print
-
-	// Example response
 	return c.JSON(fiber.Map{
 		"message":    "Link created",
 		"url":        req.URL,
@@ -104,7 +87,6 @@ func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 	})
 }
 
-// GenerateQRCodeBuffer creates a QR code and returns it as an io.Reader (no file saved)
 func GenerateQRCodeBuffer(content string) (*bytes.Reader, error) {
 	pngData, err := qrcode.Encode(content, qrcode.Medium, 256)
 	if err != nil {
@@ -113,14 +95,4 @@ func GenerateQRCodeBuffer(content string) (*bytes.Reader, error) {
 
 	reader := bytes.NewReader(pngData)
 	return reader, nil
-}
-
-func updateLink(c *fiber.Ctx) error {
-	id := c.Params("id")
-	return c.JSON(fiber.Map{"message": "Link updated", "id": id})
-}
-
-func deleteLink(c *fiber.Ctx) error {
-	id := c.Params("id")
-	return c.JSON(fiber.Map{"message": "Link deleted", "id": id})
 }

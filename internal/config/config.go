@@ -15,10 +15,15 @@ type DBConfig struct {
 	Name     string
 }
 
+type QRCodeConfig struct {
+	Bucket string
+}
+
 type Config struct {
-	Port string
-	DB   DBConfig
-	URL  Url
+	Port   string
+	DB     DBConfig
+	URL    Url
+	QRCode QRCodeConfig
 }
 
 type Url struct {
@@ -47,6 +52,9 @@ func Load() *Config {
 		URL: Url{
 			BaseUrl:            getEnv("BASE_URL", "127.0.0.1"),
 			FileServiceBaseUrl: getEnv("FILE_SERVICE_BASE_URL", "127.0.0.1"),
+		},
+		QRCode: QRCodeConfig{
+			Bucket: getEnv("QRCODE_BUCKET", "shortlink-qrcodes"),
 		},
 	}
 
