@@ -77,7 +77,7 @@ func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to generate QRCode"})
 		}
-		qrcodeUrl, err := h.fileService.UploadFile(h.cfg.QRCode.Bucket, "", shortLink, data)
+		qrcodeUrl, err := h.fileService.UploadFile(h.cfg.QRCode.Bucket, "shortlink-qrcodes", shortLink, data)
 
 		if err != nil {
 			log.Printf("file service error: %v", err)

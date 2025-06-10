@@ -26,10 +26,15 @@ func NewFileService(fileServiceBaseURL string) FileService {
 	}
 }
 
-type FileUploadResponse struct {
+type FileData struct {
 	Filename string `json:"filename"`
-	Message  string `json:"message"`
 	URL      string `json:"url"`
+}
+
+type SuccessResponse struct {
+	Success bool     `json:"success"`
+	Message string   `json:"message"`
+	Data    FileData `json:"data"` // Use 'any' (or 'interface{}') for flexibility
 }
 
 func (f *fileService) UploadFile(bucketName, folderPath, filename string, file *bytes.Reader) (string, error) {
@@ -54,7 +59,7 @@ func (f *fileService) UploadFile(bucketName, folderPath, filename string, file *
 		return "", fmt.Errorf("close writer: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/api/v1/files?bucketName=%s&folderPath=%s", f.fileServiceBaseURL, bucketName, folderPath)
+	url := fmt.Sprintf("%s/api/v1/files?bucketName=%s&folderPath=%s&isPublic=%s", f.fileServiceBaseURL, bucketName, folderPath, "true")
 	log.Printf("📤 Sending POST request to: %s", url)
 
 	req, err := http.NewRequest("POST", url, &buf)
@@ -86,12 +91,12 @@ func (f *fileService) UploadFile(bucketName, folderPath, filename string, file *
 
 	log.Printf("✅ Upload successful. Parsing response...")
 
-	var result FileUploadResponse
+	var result SuccessResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Printf("❌ JSON decode failed: %v. Raw body: %s", err, string(body))
 		return "", fmt.Errorf("decode response failed: %w", err)
 	}
 
-	log.Printf("✅ File uploaded successfully: %s", result.URL)
-	return result.URL, nil
+	log.Printf("✅ File uploaded successfully: %s", result.Data.URL)
+	return result.Data.URL, nil
 }
